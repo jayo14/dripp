@@ -1,9 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Search, Plus, Edit2, Trash2, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Search, Plus, Edit2, Trash2, X, Upload, Image as ImageIcon } from "lucide-react";
 import { formatNaira, type Category } from "@/data/products";
 import { useProductStore } from "@/store/useProductStore";
 import { Input } from "@/components/ui/input";
@@ -17,34 +14,10 @@ export const Route = createFileRoute("/admin/products")({
   component: AdminProducts,
 });
 
-const productSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  price: z.coerce.number().min(1, "Price must be > 0"),
-  category: z.enum(["women", "men", "accessories"]),
-  subcategory: z.string().min(1, "Subcategory is required"),
-  images: z.string().min(1, "At least one image URL required"),
-  colors: z.string().min(1, "At least one color required"),
-  sizes: z.string().min(1, "At least one size required"),
-  description: z.string().min(1, "Description is required"),
-  details: z.string().optional(),
-  bestseller: z.boolean(),
-  newArrival: z.boolean(),
-});
-
-type ProductFormData = z.infer<typeof productSchema>;
-
-const defaultForm: ProductFormData = {
-  name: "",
-  price: 0,
-  category: "women",
-  subcategory: "",
-  images: "",
-  colors: "",
-  sizes: "",
-  description: "",
-  details: "",
-  bestseller: false,
-  newArrival: false,
+const SIZES_BY_CAT: Record<Category, string[]> = {
+  women: ["XS", "S", "M", "L", "XL"],
+  men: ["S", "M", "L", "XL", "XXL"],
+  accessories: ["One Size"],
 };
 
 const CATS: { label: string; value: "all" | Category }[] = [
@@ -54,6 +27,36 @@ const CATS: { label: string; value: "all" | Category }[] = [
   { label: "Accessories", value: "accessories" },
 ];
 
+interface FormState {
+  name: string;
+  price: string;
+  category: Category;
+  subcategory: string;
+  images: string[];
+  newImages: File[];
+  colors: { name: string; hex: string }[];
+  sizes: string[];
+  description: string;
+  details: string;
+  bestseller: boolean;
+  newArrival: boolean;
+}
+
+const emptyForm = (): FormState => ({
+  name: "",
+  price: "",
+  category: "women",
+  subcategory: "",
+  images: [],
+  newImages: [],
+  colors: [],
+  sizes: [],
+  description: "",
+  details: "",
+  bestseller: false,
+  newArrival: false,
+});
+
 function AdminProducts() {
   const items = useProductStore((s) => s.items);
   const addProduct = useProductStore((s) => s.add);
@@ -62,71 +65,149 @@ function AdminProducts() {
 
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<"all" | Category>("all");
-  const [modalOpen, setModalOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
-    defaultValues: defaultForm,
-  });
+  const [form, setForm] = useState<FormState>(emptyForm());
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState | "colors" | "sizes", string>>>({});
+  const fileRef = useRef<HTMLInputElement>(null);
+  const colorNameRef = useRef<HTMLInputElement>(null);
+  const colorHexRef = useRef<HTMLInputElement>(null);
 
   const openAdd = () => {
     setEditingId(null);
-    reset(defaultForm);
-    setModalOpen(true);
+    setForm(emptyForm());
+    setErrors({});
+    setDialogOpen(true);
   };
 
   const openEdit = (id: string) => {
     const p = useProductStore.getState().getById(id);
     if (!p) return;
     setEditingId(id);
-    reset({
+    setForm({
       name: p.name,
-      price: p.price,
+      price: String(p.price),
       category: p.category,
       subcategory: p.subcategory,
-      images: p.images.join(", "),
-      colors: p.colors.map((c) => `${c.name}:${c.hex}`).join(", "),
-      sizes: p.sizes.join(", "),
+      images: p.images,
+      newImages: [],
+      colors: p.colors.map((c) => ({ ...c })),
+      sizes: [...p.sizes],
       description: p.description,
       details: p.details.join("\n"),
       bestseller: p.bestseller ?? false,
       newArrival: p.newArrival ?? false,
     });
-    setModalOpen(true);
+    setErrors({});
+    setDialogOpen(true);
   };
 
-  const closeModal = () => {
-    setModalOpen(false);
+  const closeDialog = () => {
+    setDialogOpen(false);
     setEditingId(null);
+    setForm(emptyForm());
+    setErrors({});
+    fileRef.current && (fileRef.current.value = "");
   };
 
-  const onSubmit = (data: ProductFormData) => {
-    const images = data.images.split(",").map((s) => s.trim()).filter(Boolean);
-    const colors = data.colors.split(",").map((s) => s.trim()).filter(Boolean).map((s) => {
-      const [name, hex] = s.split(":").map((p) => p.trim());
-      return { name, hex: hex || "#000000" };
-    });
-    const sizes = data.sizes.split(",").map((s) => s.trim()).filter(Boolean);
-    const details = (data.details || "").split("\n").map((s) => s.trim()).filter(Boolean);
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleImageUpload = (files: FileList | null) => {
+    if (!files) return;
+    const valid: File[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      if (f.type.startsWith("image/")) valid.push(f);
+    }
+    if (valid.length === 0) return;
+    set("newImages", [...form.newImages, ...valid]);
+  };
+
+  const removeNewImage = (idx: number) => {
+    const next = form.newImages.filter((_, i) => i !== idx);
+    set("newImages", next);
+  };
+
+  const removeExistingImage = (idx: number) => {
+    const next = form.images.filter((_, i) => i !== idx);
+    set("images", next);
+  };
+
+  const addColor = () => {
+    const name = (colorNameRef.current?.value || "").trim();
+    const hex = (colorHexRef.current?.value || "#000000").trim();
+    if (!name) return;
+    if (form.colors.some((c) => c.name.toLowerCase() === name.toLowerCase())) return;
+    set("colors", [...form.colors, { name, hex }]);
+    if (colorNameRef.current) colorNameRef.current.value = "";
+    if (colorHexRef.current) colorHexRef.current.value = "#000000";
+  };
+
+  const removeColor = (idx: number) => {
+    set("colors", form.colors.filter((_, i) => i !== idx));
+  };
+
+  const toggleSize = (s: string) => {
+    set(
+      "sizes",
+      form.sizes.includes(s) ? form.sizes.filter((x) => x !== s) : [...form.sizes, s],
+    );
+  };
+
+  const addCustomSize = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const val = (e.target as HTMLInputElement).value.trim();
+    if (e.key === "Enter" && val && !form.sizes.includes(val)) {
+      e.preventDefault();
+      set("sizes", [...form.sizes, val]);
+      (e.target as HTMLInputElement).value = "";
+    }
+  };
+
+  const validate = (): boolean => {
+    const errs: typeof errors = {};
+    if (!form.name.trim()) errs.name = "Name is required";
+    const priceNum = Number(form.price);
+    if (!form.price.trim() || isNaN(priceNum) || priceNum < 1) errs.price = "Valid price required";
+    if (!form.subcategory.trim()) errs.subcategory = "Subcategory is required";
+    if (form.images.length === 0 && form.newImages.length === 0) errs.images = "At least one image required";
+    if (form.colors.length === 0) errs.colors = "At least one color required";
+    if (form.sizes.length === 0) errs.sizes = "At least one size required";
+    if (!form.description.trim()) errs.description = "Description is required";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const readFiles = (files: File[]): Promise<string[]> =>
+    Promise.all(
+      files.map(
+        (f) =>
+          new Promise<string>((res) => {
+            const reader = new FileReader();
+            reader.onload = () => res(reader.result as string);
+            reader.readAsDataURL(f);
+          }),
+      ),
+    );
+
+  const onSubmit = async () => {
+    if (!validate()) return;
+    const newDataUrls = await readFiles(form.newImages);
+    const allImages = [...form.images, ...newDataUrls];
+    const details = form.details.split("\n").map((s) => s.trim()).filter(Boolean);
 
     const payload = {
-      name: data.name,
-      price: data.price,
-      category: data.category,
-      subcategory: data.subcategory,
-      images,
-      colors,
-      sizes,
-      description: data.description,
+      name: form.name.trim(),
+      price: Number(form.price),
+      category: form.category,
+      subcategory: form.subcategory.trim(),
+      images: allImages,
+      colors: form.colors,
+      sizes: form.sizes,
+      description: form.description.trim(),
       details,
-      bestseller: data.bestseller,
-      newArrival: data.newArrival,
+      bestseller: form.bestseller,
+      newArrival: form.newArrival,
     };
 
     if (editingId) {
@@ -136,13 +217,7 @@ function AdminProducts() {
       addProduct(payload);
       toast.success("Product added");
     }
-
-    closeModal();
-  };
-
-  const remove = (id: string) => {
-    removeProduct(id);
-    toast.success("Product removed");
+    closeDialog();
   };
 
   const filtered = items.filter(
@@ -153,7 +228,7 @@ function AdminProducts() {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeModal();
+      if (e.key === "Escape") closeDialog();
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
@@ -230,7 +305,7 @@ function AdminProducts() {
                     <button onClick={() => openEdit(p.id)} className="p-2 text-muted-foreground hover:text-foreground" aria-label="Edit">
                       <Edit2 className="h-4 w-4" />
                     </button>
-                    <button onClick={() => remove(p.id)} className="p-2 text-muted-foreground hover:text-rose-600" aria-label="Delete">
+                    <button onClick={() => { removeProduct(p.id); toast.success("Product removed"); }} className="p-2 text-muted-foreground hover:text-rose-600" aria-label="Delete">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
@@ -244,88 +319,244 @@ function AdminProducts() {
         </table>
       </div>
 
-      {/* Modal overlay */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 pt-4 pb-10 sm:pt-10">
-          <div className="relative w-full max-w-xl mx-4 rounded-lg border border-border bg-background p-6 shadow-xl sm:p-8">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-light">{editingId ? "Edit Product" : "New Product"}</h2>
-              <button onClick={closeModal} className="p-1 text-muted-foreground hover:text-foreground">
+      {/* Dialog: modal on desktop, full-screen on mobile */}
+      {dialogOpen && (
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-40 bg-black/40 sm:block" onClick={closeDialog} />
+
+          <div
+            className={cn(
+              "fixed z-50 overflow-y-auto",
+              /* mobile: full-screen */
+              "inset-0 bg-background",
+              /* desktop: centered modal */
+              "sm:inset-auto sm:top-[5vh] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-2xl sm:rounded-lg sm:border sm:border-border sm:bg-background sm:shadow-xl sm:max-h-[90vh]",
+            )}
+          >
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-4 py-4 sm:px-6">
+              <h2 className="text-lg font-light">{editingId ? "Edit Product" : "New Product"}</h2>
+              <button onClick={closeDialog} className="p-1 text-muted-foreground hover:text-foreground">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Body */}
+            <div className="space-y-6 px-4 py-6 sm:px-6">
+              {/* Name & Price row */}
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" {...register("name")} />
-                  {errors.name && <p className="text-xs text-rose-500">{errors.name.message}</p>}
+                <div className="space-y-1 sm:col-span-2">
+                  <Label htmlFor="p-name">Product name</Label>
+                  <Input id="p-name" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. Adaeze Silk Slip Dress" />
+                  {errors.name && <p className="text-xs text-rose-500">{errors.name}</p>}
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="price">Price (₦)</Label>
-                  <Input id="price" type="number" {...register("price")} />
-                  {errors.price && <p className="text-xs text-rose-500">{errors.price.message}</p>}
+                <div className="space-y-1">
+                  <Label htmlFor="p-price">Price (₦)</Label>
+                  <Input id="p-price" type="number" value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="285000" />
+                  {errors.price && <p className="text-xs text-rose-500">{errors.price}</p>}
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="category">Category</Label>
-                  <select id="category" {...register("category")} className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                <div className="space-y-1">
+                  <Label htmlFor="p-category">Category</Label>
+                  <select
+                    id="p-category"
+                    value={form.category}
+                    onChange={(e) => {
+                      const cat = e.target.value as Category;
+                      set("category", cat);
+                      set("sizes", form.sizes.filter((s) => SIZES_BY_CAT[cat].includes(s) || s === "One Size"));
+                    }}
+                    className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
                     <option value="women">Women</option>
                     <option value="men">Men</option>
                     <option value="accessories">Accessories</option>
                   </select>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="subcategory">Subcategory</Label>
-                  <Input id="subcategory" {...register("subcategory")} />
-                  {errors.subcategory && <p className="text-xs text-rose-500">{errors.subcategory.message}</p>}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="images">Image URLs (comma-separated)</Label>
-                  <Input id="images" placeholder="/assets/product-1.png, /assets/product-2.png" {...register("images")} />
-                  {errors.images && <p className="text-xs text-rose-500">{errors.images.message}</p>}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="colors">Colors (name:hex, comma-separated)</Label>
-                  <Input id="colors" placeholder="Champagne:#D4AF88, Black:#1A1A1A" {...register("colors")} />
-                  {errors.colors && <p className="text-xs text-rose-500">{errors.colors.message}</p>}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="sizes">Sizes (comma-separated)</Label>
-                  <Input id="sizes" placeholder="XS, S, M, L, XL" {...register("sizes")} />
-                  {errors.sizes && <p className="text-xs text-rose-500">{errors.sizes.message}</p>}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea id="description" {...register("description")} />
-                  {errors.description && <p className="text-xs text-rose-500">{errors.description.message}</p>}
-                </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="details">Details (one per line)</Label>
-                  <Textarea id="details" placeholder="100% Mulberry Silk&#10;Made in Lagos&#10;Dry clean only" {...register("details")} />
-                </div>
               </div>
 
+              {/* Subcategory */}
+              <div className="space-y-1">
+                <Label htmlFor="p-sub">Subcategory</Label>
+                <Input id="p-sub" value={form.subcategory} onChange={(e) => set("subcategory", e.target.value)} placeholder="Dresses, Tailoring, Knitwear…" />
+                {errors.subcategory && <p className="text-xs text-rose-500">{errors.subcategory}</p>}
+              </div>
+
+              {/* Images */}
+              <div className="space-y-2">
+                <Label>Images</Label>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => handleImageUpload(e.target.files)}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-4 py-6 text-sm text-muted-foreground hover:border-foreground hover:text-foreground transition"
+                >
+                  <Upload className="h-5 w-5" />
+                  Upload images
+                </button>
+                {errors.images && <p className="text-xs text-rose-500">{errors.images}</p>}
+                {(form.images.length > 0 || form.newImages.length > 0) && (
+                  <div className="flex flex-wrap gap-2">
+                    {form.images.map((src, i) => (
+                      <div key={`e-${i}`} className="relative group h-20 w-20 shrink-0">
+                        <img src={src} alt="" className="h-full w-full object-cover rounded border border-border" />
+                        <button
+                          type="button"
+                          onClick={() => removeExistingImage(i)}
+                          className="absolute -top-1.5 -right-1.5 hidden h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-white group-hover:flex"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {form.newImages.map((file, i) => (
+                      <div key={`n-${i}`} className="relative group h-20 w-20 shrink-0">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt=""
+                          className="h-full w-full object-cover rounded border border-border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeNewImage(i)}
+                          className="absolute -top-1.5 -right-1.5 hidden h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-white group-hover:flex"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition rounded">
+                          <ImageIcon className="h-5 w-5 text-white" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Colors */}
+              <div className="space-y-2">
+                <Label>Colors</Label>
+                <div className="flex gap-2">
+                  <Input ref={colorNameRef} placeholder="Color name" className="flex-1" onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addColor())} />
+                  <input
+                    ref={colorHexRef}
+                    type="color"
+                    defaultValue="#000000"
+                    className="h-10 w-10 cursor-pointer rounded border border-border bg-background p-0.5"
+                  />
+                  <Button type="button" variant="outline" onClick={addColor} className="shrink-0 rounded-none text-xs uppercase tracking-luxury">
+                    Add
+                  </Button>
+                </div>
+                {errors.colors && <p className="text-xs text-rose-500">{errors.colors}</p>}
+                {form.colors.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {form.colors.map((c, i) => (
+                      <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs">
+                        <span className="h-3.5 w-3.5 rounded-full border border-border" style={{ backgroundColor: c.hex }} />
+                        {c.name}
+                        <button type="button" onClick={() => removeColor(i)} className="ml-0.5 text-muted-foreground hover:text-rose-500">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Sizes */}
+              <div className="space-y-2">
+                <Label>Sizes</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {SIZES_BY_CAT[form.category].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleSize(s)}
+                      className={cn(
+                        "px-3 py-1.5 text-xs uppercase tracking-luxury transition",
+                        form.sizes.includes(s)
+                          ? "bg-foreground text-background"
+                          : "border border-border text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                  <input
+                    placeholder="+ custom"
+                    onKeyDown={addCustomSize}
+                    className="w-20 border-0 border-b border-border bg-transparent px-2 py-1.5 text-xs uppercase tracking-luxury outline-none focus:border-foreground"
+                  />
+                </div>
+                {errors.sizes && <p className="text-xs text-rose-500">{errors.sizes}</p>}
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1">
+                <Label htmlFor="p-desc">Description</Label>
+                <Textarea
+                  id="p-desc"
+                  value={form.description}
+                  onChange={(e) => set("description", e.target.value)}
+                  placeholder="A languid bias-cut slip in heavyweight silk satin…"
+                  rows={3}
+                />
+                {errors.description && <p className="text-xs text-rose-500">{errors.description}</p>}
+              </div>
+
+              {/* Details */}
+              <div className="space-y-1">
+                <Label htmlFor="p-details">Details (one per line)</Label>
+                <Textarea
+                  id="p-details"
+                  value={form.details}
+                  onChange={(e) => set("details", e.target.value)}
+                  placeholder="100% Mulberry Silk&#10;Made in Lagos&#10;Dry clean only"
+                  rows={3}
+                />
+              </div>
+
+              {/* Toggles */}
               <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" {...register("bestseller")} className="h-4 w-4 accent-foreground" />
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={form.bestseller}
+                    onChange={(e) => set("bestseller", e.target.checked)}
+                    className="h-4 w-4 accent-foreground"
+                  />
                   Bestseller
                 </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" {...register("newArrival")} className="h-4 w-4 accent-foreground" />
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={form.newArrival}
+                    onChange={(e) => set("newArrival", e.target.checked)}
+                    className="h-4 w-4 accent-foreground"
+                  />
                   New arrival
                 </label>
               </div>
+            </div>
 
-              <div className="flex justify-end gap-3 pt-2">
-                <Button type="button" variant="outline" onClick={closeModal}>Cancel</Button>
-                <Button type="submit" className="rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs uppercase tracking-luxury">
-                  {editingId ? "Update" : "Add"} product
-                </Button>
-              </div>
-            </form>
+            {/* Footer */}
+            <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border bg-background px-4 py-4 sm:px-6">
+              <Button type="button" variant="outline" onClick={closeDialog} className="rounded-none text-xs uppercase tracking-luxury">
+                Cancel
+              </Button>
+              <Button onClick={onSubmit} className="rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs uppercase tracking-luxury">
+                {editingId ? "Update" : "Add"} product
+              </Button>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
