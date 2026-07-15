@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
-import { MOCK_ORDERS, STATUS_STYLES, type OrderStatus, type AdminOrder } from "@/data/mockOrders";
+import { STATUS_STYLES, type OrderStatus } from "@/data/mockOrders";
+import { useOrderStore } from "@/store/useOrderStore";
 import { formatNaira } from "@/data/products";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -13,7 +14,12 @@ export const Route = createFileRoute("/admin/orders")({
 const STATUSES: (OrderStatus | "all")[] = ["all", "pending", "processing", "shipped", "delivered", "cancelled"];
 
 function AdminOrders() {
-  const [orders, setOrders] = useState<AdminOrder[]>(MOCK_ORDERS);
+  const orders = useOrderStore((s) => s.orders);
+  const updateStatus = useOrderStore((s) => s.updateStatus);
+  const seed = useOrderStore((s) => s.seed);
+
+  useEffect(() => { seed(); }, [seed]);
+
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
   const [q, setQ] = useState("");
 
@@ -22,12 +28,11 @@ function AdminOrders() {
       (filter === "all" || o.status === filter) &&
       (q === "" ||
         o.id.toLowerCase().includes(q.toLowerCase()) ||
-        o.customer.toLowerCase().includes(q.toLowerCase()) ||
-        o.email.toLowerCase().includes(q.toLowerCase()))
+        o.customer.name.toLowerCase().includes(q.toLowerCase()) ||
+        o.customer.email.toLowerCase().includes(q.toLowerCase()))
   );
 
-  const updateStatus = (id: string, status: OrderStatus) =>
-    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+  const onStatusChange = (id: string, status: OrderStatus) => updateStatus(id, status);
 
   return (
     <div className="space-y-6">
@@ -63,8 +68,8 @@ function AdminOrders() {
             <tr>
               <th className="px-4 py-3 text-left">Order</th>
               <th className="px-4 py-3 text-left">Customer</th>
-              <th className="px-4 py-3 text-left">Date</th>
-              <th className="px-4 py-3 text-left">Items</th>
+              <th className="hidden px-4 py-3 text-left sm:table-cell">Date</th>
+              <th className="hidden px-4 py-3 text-left md:table-cell">Payment</th>
               <th className="px-4 py-3 text-left">Total</th>
               <th className="px-4 py-3 text-left">Status</th>
             </tr>
@@ -74,16 +79,23 @@ function AdminOrders() {
               <tr key={o.id} className="hover:bg-muted/30">
                 <td className="px-4 py-3 font-mono text-xs">{o.id}</td>
                 <td className="px-4 py-3">
-                  <p className="font-medium">{o.customer}</p>
-                  <p className="text-xs text-muted-foreground">{o.email}</p>
+                  <p className="font-medium">{o.customer.name}</p>
+                  <p className="text-xs text-muted-foreground">{o.customer.email}</p>
                 </td>
-                <td className="px-4 py-3 text-muted-foreground">{o.date}</td>
-                <td className="px-4 py-3">{o.items}</td>
+                <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                  {new Date(o.createdAt).toLocaleDateString("en-NG", { day: "numeric", month: "short" })}
+                </td>
+                <td className="hidden px-4 py-3 md:table-cell">
+                  <span className="text-[10px] uppercase tracking-luxury">
+                    {o.paymentMethod === "card" ? "Card" : "WhatsApp"}
+                    {o.paid ? "" : " · Unpaid"}
+                  </span>
+                </td>
                 <td className="px-4 py-3">{formatNaira(o.total)}</td>
                 <td className="px-4 py-3">
                   <select
                     value={o.status}
-                    onChange={(e) => updateStatus(o.id, e.target.value as OrderStatus)}
+                    onChange={(e) => onStatusChange(o.id, e.target.value as OrderStatus)}
                     className={cn("border-0 px-2 py-1 text-[10px] uppercase tracking-luxury outline-none", STATUS_STYLES[o.status])}
                   >
                     {(["pending", "processing", "shipped", "delivered", "cancelled"] as OrderStatus[]).map((s) => (

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WishlistRouteImport } from './routes/wishlist'
+import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -30,6 +31,11 @@ import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 const WishlistRoute = WishlistRouteImport.update({
   id: '/wishlist',
   path: '/wishlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackingRoute = TrackingRouteImport.update({
+  id: '/tracking',
+  path: '/tracking',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/signup': typeof SignupRoute
+  '/tracking': typeof TrackingRoute
   '/wishlist': typeof WishlistRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/signup': typeof SignupRoute
+  '/tracking': typeof TrackingRoute
   '/wishlist': typeof WishlistRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/signup': typeof SignupRoute
+  '/tracking': typeof TrackingRoute
   '/wishlist': typeof WishlistRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/shop'
     | '/signup'
+    | '/tracking'
     | '/wishlist'
     | '/admin/customers'
     | '/admin/orders'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/shop'
     | '/signup'
+    | '/tracking'
     | '/wishlist'
     | '/admin/customers'
     | '/admin/orders'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/shop'
     | '/signup'
+    | '/tracking'
     | '/wishlist'
     | '/admin/customers'
     | '/admin/orders'
@@ -240,6 +252,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ShopRoute: typeof ShopRoute
   SignupRoute: typeof SignupRoute
+  TrackingRoute: typeof TrackingRoute
   WishlistRoute: typeof WishlistRoute
   ProductProductIdRoute: typeof ProductProductIdRoute
 }
@@ -251,6 +264,13 @@ declare module '@tanstack/react-router' {
       path: '/wishlist'
       fullPath: '/wishlist'
       preLoaderRoute: typeof WishlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tracking': {
+      id: '/tracking'
+      path: '/tracking'
+      fullPath: '/tracking'
+      preLoaderRoute: typeof TrackingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -397,6 +417,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ShopRoute: ShopRoute,
   SignupRoute: SignupRoute,
+  TrackingRoute: TrackingRoute,
   WishlistRoute: WishlistRoute,
   ProductProductIdRoute: ProductProductIdRoute,
 }
