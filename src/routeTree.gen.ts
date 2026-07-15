@@ -23,10 +23,21 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ProductProductIdRouteImport } from './routes/product.$productId'
+import { Route as ApiProductsRouteImport } from './routes/api.products'
+import { Route as ApiOrdersRouteImport } from './routes/api.orders'
+import { Route as ApiNewsletterRouteImport } from './routes/api.newsletter'
+import { Route as ApiDashboardRouteImport } from './routes/api.dashboard'
+import { Route as ApiContactRouteImport } from './routes/api.contact'
+import { Route as ApiBrandRouteImport } from './routes/api.brand'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
+import { Route as ApiTrackingIdRouteImport } from './routes/api.tracking.$id'
+import { Route as ApiProductsIdRouteImport } from './routes/api.products.$id'
+import { Route as ApiOrdersIdRouteImport } from './routes/api.orders.$id'
+import { Route as ApiAuthSignupRouteImport } from './routes/api.auth.signup'
+import { Route as ApiAuthLoginRouteImport } from './routes/api.auth.login'
 
 const WishlistRoute = WishlistRouteImport.update({
   id: '/wishlist',
@@ -98,6 +109,36 @@ const ProductProductIdRoute = ProductProductIdRouteImport.update({
   path: '/product/$productId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiProductsRoute = ApiProductsRouteImport.update({
+  id: '/api/products',
+  path: '/api/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOrdersRoute = ApiOrdersRouteImport.update({
+  id: '/api/orders',
+  path: '/api/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNewsletterRoute = ApiNewsletterRouteImport.update({
+  id: '/api/newsletter',
+  path: '/api/newsletter',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDashboardRoute = ApiDashboardRouteImport.update({
+  id: '/api/dashboard',
+  path: '/api/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContactRoute = ApiContactRouteImport.update({
+  id: '/api/contact',
+  path: '/api/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBrandRoute = ApiBrandRouteImport.update({
+  id: '/api/brand',
+  path: '/api/brand',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -118,6 +159,31 @@ const AdminCustomersRoute = AdminCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiTrackingIdRoute = ApiTrackingIdRouteImport.update({
+  id: '/api/tracking/$id',
+  path: '/api/tracking/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiProductsIdRoute = ApiProductsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiProductsRoute,
+} as any)
+const ApiOrdersIdRoute = ApiOrdersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiOrdersRoute,
+} as any)
+const ApiAuthSignupRoute = ApiAuthSignupRouteImport.update({
+  id: '/api/auth/signup',
+  path: '/api/auth/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthLoginRoute = ApiAuthLoginRouteImport.update({
+  id: '/api/auth/login',
+  path: '/api/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -136,8 +202,19 @@ export interface FileRoutesByFullPath {
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/api/brand': typeof ApiBrandRoute
+  '/api/contact': typeof ApiContactRoute
+  '/api/dashboard': typeof ApiDashboardRoute
+  '/api/newsletter': typeof ApiNewsletterRoute
+  '/api/orders': typeof ApiOrdersRouteWithChildren
+  '/api/products': typeof ApiProductsRouteWithChildren
   '/product/$productId': typeof ProductProductIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/auth/signup': typeof ApiAuthSignupRoute
+  '/api/orders/$id': typeof ApiOrdersIdRoute
+  '/api/products/$id': typeof ApiProductsIdRoute
+  '/api/tracking/$id': typeof ApiTrackingIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -155,8 +232,19 @@ export interface FileRoutesByTo {
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/api/brand': typeof ApiBrandRoute
+  '/api/contact': typeof ApiContactRoute
+  '/api/dashboard': typeof ApiDashboardRoute
+  '/api/newsletter': typeof ApiNewsletterRoute
+  '/api/orders': typeof ApiOrdersRouteWithChildren
+  '/api/products': typeof ApiProductsRouteWithChildren
   '/product/$productId': typeof ProductProductIdRoute
   '/admin': typeof AdminIndexRoute
+  '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/auth/signup': typeof ApiAuthSignupRoute
+  '/api/orders/$id': typeof ApiOrdersIdRoute
+  '/api/products/$id': typeof ApiProductsIdRoute
+  '/api/tracking/$id': typeof ApiTrackingIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -176,8 +264,19 @@ export interface FileRoutesById {
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/api/brand': typeof ApiBrandRoute
+  '/api/contact': typeof ApiContactRoute
+  '/api/dashboard': typeof ApiDashboardRoute
+  '/api/newsletter': typeof ApiNewsletterRoute
+  '/api/orders': typeof ApiOrdersRouteWithChildren
+  '/api/products': typeof ApiProductsRouteWithChildren
   '/product/$productId': typeof ProductProductIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/auth/signup': typeof ApiAuthSignupRoute
+  '/api/orders/$id': typeof ApiOrdersIdRoute
+  '/api/products/$id': typeof ApiProductsIdRoute
+  '/api/tracking/$id': typeof ApiTrackingIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -198,8 +297,19 @@ export interface FileRouteTypes {
     | '/admin/orders'
     | '/admin/products'
     | '/admin/settings'
+    | '/api/brand'
+    | '/api/contact'
+    | '/api/dashboard'
+    | '/api/newsletter'
+    | '/api/orders'
+    | '/api/products'
     | '/product/$productId'
     | '/admin/'
+    | '/api/auth/login'
+    | '/api/auth/signup'
+    | '/api/orders/$id'
+    | '/api/products/$id'
+    | '/api/tracking/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -217,8 +327,19 @@ export interface FileRouteTypes {
     | '/admin/orders'
     | '/admin/products'
     | '/admin/settings'
+    | '/api/brand'
+    | '/api/contact'
+    | '/api/dashboard'
+    | '/api/newsletter'
+    | '/api/orders'
+    | '/api/products'
     | '/product/$productId'
     | '/admin'
+    | '/api/auth/login'
+    | '/api/auth/signup'
+    | '/api/orders/$id'
+    | '/api/products/$id'
+    | '/api/tracking/$id'
   id:
     | '__root__'
     | '/'
@@ -237,8 +358,19 @@ export interface FileRouteTypes {
     | '/admin/orders'
     | '/admin/products'
     | '/admin/settings'
+    | '/api/brand'
+    | '/api/contact'
+    | '/api/dashboard'
+    | '/api/newsletter'
+    | '/api/orders'
+    | '/api/products'
     | '/product/$productId'
     | '/admin/'
+    | '/api/auth/login'
+    | '/api/auth/signup'
+    | '/api/orders/$id'
+    | '/api/products/$id'
+    | '/api/tracking/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -254,7 +386,16 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   TrackingRoute: typeof TrackingRoute
   WishlistRoute: typeof WishlistRoute
+  ApiBrandRoute: typeof ApiBrandRoute
+  ApiContactRoute: typeof ApiContactRoute
+  ApiDashboardRoute: typeof ApiDashboardRoute
+  ApiNewsletterRoute: typeof ApiNewsletterRoute
+  ApiOrdersRoute: typeof ApiOrdersRouteWithChildren
+  ApiProductsRoute: typeof ApiProductsRouteWithChildren
   ProductProductIdRoute: typeof ProductProductIdRoute
+  ApiAuthLoginRoute: typeof ApiAuthLoginRoute
+  ApiAuthSignupRoute: typeof ApiAuthSignupRoute
+  ApiTrackingIdRoute: typeof ApiTrackingIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -357,6 +498,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/products': {
+      id: '/api/products'
+      path: '/api/products'
+      fullPath: '/api/products'
+      preLoaderRoute: typeof ApiProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/orders': {
+      id: '/api/orders'
+      path: '/api/orders'
+      fullPath: '/api/orders'
+      preLoaderRoute: typeof ApiOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/newsletter': {
+      id: '/api/newsletter'
+      path: '/api/newsletter'
+      fullPath: '/api/newsletter'
+      preLoaderRoute: typeof ApiNewsletterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dashboard': {
+      id: '/api/dashboard'
+      path: '/api/dashboard'
+      fullPath: '/api/dashboard'
+      preLoaderRoute: typeof ApiDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/contact': {
+      id: '/api/contact'
+      path: '/api/contact'
+      fullPath: '/api/contact'
+      preLoaderRoute: typeof ApiContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/brand': {
+      id: '/api/brand'
+      path: '/api/brand'
+      fullPath: '/api/brand'
+      preLoaderRoute: typeof ApiBrandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/settings': {
       id: '/admin/settings'
       path: '/settings'
@@ -385,6 +568,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCustomersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/tracking/$id': {
+      id: '/api/tracking/$id'
+      path: '/api/tracking/$id'
+      fullPath: '/api/tracking/$id'
+      preLoaderRoute: typeof ApiTrackingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/products/$id': {
+      id: '/api/products/$id'
+      path: '/$id'
+      fullPath: '/api/products/$id'
+      preLoaderRoute: typeof ApiProductsIdRouteImport
+      parentRoute: typeof ApiProductsRoute
+    }
+    '/api/orders/$id': {
+      id: '/api/orders/$id'
+      path: '/$id'
+      fullPath: '/api/orders/$id'
+      preLoaderRoute: typeof ApiOrdersIdRouteImport
+      parentRoute: typeof ApiOrdersRoute
+    }
+    '/api/auth/signup': {
+      id: '/api/auth/signup'
+      path: '/api/auth/signup'
+      fullPath: '/api/auth/signup'
+      preLoaderRoute: typeof ApiAuthSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/login': {
+      id: '/api/auth/login'
+      path: '/api/auth/login'
+      fullPath: '/api/auth/login'
+      preLoaderRoute: typeof ApiAuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -406,6 +624,30 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface ApiOrdersRouteChildren {
+  ApiOrdersIdRoute: typeof ApiOrdersIdRoute
+}
+
+const ApiOrdersRouteChildren: ApiOrdersRouteChildren = {
+  ApiOrdersIdRoute: ApiOrdersIdRoute,
+}
+
+const ApiOrdersRouteWithChildren = ApiOrdersRoute._addFileChildren(
+  ApiOrdersRouteChildren,
+)
+
+interface ApiProductsRouteChildren {
+  ApiProductsIdRoute: typeof ApiProductsIdRoute
+}
+
+const ApiProductsRouteChildren: ApiProductsRouteChildren = {
+  ApiProductsIdRoute: ApiProductsIdRoute,
+}
+
+const ApiProductsRouteWithChildren = ApiProductsRoute._addFileChildren(
+  ApiProductsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -419,7 +661,16 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   TrackingRoute: TrackingRoute,
   WishlistRoute: WishlistRoute,
+  ApiBrandRoute: ApiBrandRoute,
+  ApiContactRoute: ApiContactRoute,
+  ApiDashboardRoute: ApiDashboardRoute,
+  ApiNewsletterRoute: ApiNewsletterRoute,
+  ApiOrdersRoute: ApiOrdersRouteWithChildren,
+  ApiProductsRoute: ApiProductsRouteWithChildren,
   ProductProductIdRoute: ProductProductIdRoute,
+  ApiAuthLoginRoute: ApiAuthLoginRoute,
+  ApiAuthSignupRoute: ApiAuthSignupRoute,
+  ApiTrackingIdRoute: ApiTrackingIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
