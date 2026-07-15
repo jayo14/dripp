@@ -89,20 +89,20 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isAdmin = pathname.startsWith("/admin");
+  const hideChrome = pathname.startsWith("/admin") || ["/login", "/signup", "/forgot-password", "/reset-password"].includes(pathname);
   return (
     <QueryClientProvider client={queryClient}>
       <BrandThemeApplier />
-      {!isAdmin && <PromoBanner />}
-      {!isAdmin && <Navbar />}
-      <main className={isAdmin ? "min-h-screen" : "min-h-[60vh] pb-20 md:pb-0"}>
+      {!hideChrome && <PromoBanner />}
+      {!hideChrome && <Navbar />}
+      <main className={hideChrome ? "min-h-screen" : "min-h-[60vh] pb-20 md:pb-0"}>
         <Outlet />
       </main>
-      {!isAdmin && <Footer />}
+      {!hideChrome && <Footer />}
       <CartDrawer />
-      {!isAdmin && <WhatsAppButton />}
+      {!hideChrome && <WhatsAppButton />}
       <AdminPanel />
-      {!isAdmin && <MobileBottomNav />}
+      {!hideChrome && <MobileBottomNav />}
     </QueryClientProvider>
   );
 }
