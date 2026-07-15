@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
 import { Instagram } from "lucide-react";
 import { useBrandStore } from "@/store/useBrandStore";
-import catWomen from "@/assets/category-women.jpg";
-import catMen from "@/assets/category-men.jpg";
-import catAcc from "@/assets/category-accessories.jpg";
-import hero from "@/assets/hero-1.jpg";
-import brand from "@/assets/brand-story.jpg";
-import p1 from "@/assets/product-1.jpg";
+const catWomen = "/assets/category-women.png";
+const catMen = "/assets/category-men.png";
+const catAcc = "/assets/category-accessories.png";
+const hero = "/assets/hero-1.png";
+const brand = "/assets/brand-story.png";
+const p1 = "/assets/product-1.png";
 
 export function InstagramGallery() {
   const visible = useBrandStore((s) => s.sections.instagram);

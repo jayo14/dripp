@@ -8,8 +8,8 @@ import { ShopByCategory } from "@/components/sections/ShopByCategory";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { InstagramGallery } from "@/components/sections/InstagramGallery";
 import { Newsletter } from "@/components/sections/Newsletter";
-import hero from "@/assets/hero-1.jpg";
-import brandImg from "@/assets/brand-story.jpg";
+const hero = "/assets/hero-1.png";
+const brandImg = "/assets/brand-story.png";
 
 export const Route = createFileRoute("/")({
   component: Home,

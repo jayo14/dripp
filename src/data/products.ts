@@ -1,9 +1,9 @@
-import p1 from "@/assets/product-1.jpg";
-import p2 from "@/assets/product-2.jpg";
-import p3 from "@/assets/product-3.jpg";
-import p4 from "@/assets/product-4.jpg";
-import p5 from "@/assets/product-5.jpg";
-import p6 from "@/assets/product-6.jpg";
+const p1 = "/assets/product-1.png";
+const p2 = "/assets/product-2.png";
+const p3 = "/assets/product-3.png";
+const p4 = "/assets/product-4.png";
+const p5 = "/assets/product-5.png";
+const p6 = "/assets/product-6.png";
 
 export type Category = "women" | "men" | "accessories";
 
