@@ -59,9 +59,13 @@ const emptyForm = (): FormState => ({
 
 function AdminProducts() {
   const items = useProductStore((s) => s.items);
+  const loading = useProductStore((s) => s.loading);
+  const fetchAll = useProductStore((s) => s.fetchAll);
   const addProduct = useProductStore((s) => s.add);
   const updateProduct = useProductStore((s) => s.update);
   const removeProduct = useProductStore((s) => s.remove);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<"all" | Category>("all");
@@ -312,7 +316,10 @@ function AdminProducts() {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {loading && (
+              <tr><td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">Loading products…</td></tr>
+            )}
+            {!loading && filtered.length === 0 && (
               <tr><td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">No products found.</td></tr>
             )}
           </tbody>

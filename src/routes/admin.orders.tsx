@@ -15,10 +15,11 @@ const STATUSES: (OrderStatus | "all")[] = ["all", "pending", "processing", "ship
 
 function AdminOrders() {
   const orders = useOrderStore((s) => s.orders);
+  const loading = useOrderStore((s) => s.loading);
+  const fetchAll = useOrderStore((s) => s.fetchAll);
   const updateStatus = useOrderStore((s) => s.updateStatus);
-  const seed = useOrderStore((s) => s.seed);
 
-  useEffect(() => { seed(); }, [seed]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
   const [q, setQ] = useState("");
@@ -105,7 +106,10 @@ function AdminOrders() {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {loading && (
+              <tr><td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">Loading orders…</td></tr>
+            )}
+            {!loading && filtered.length === 0 && (
               <tr><td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">No orders match your filters.</td></tr>
             )}
           </tbody>

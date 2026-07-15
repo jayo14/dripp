@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Search, Package, CheckCircle2, Truck, XCircle, Clock } from "lucide-react";
+import { Search, Package, CheckCircle2, Truck, XCircle, Clock, Loader2 } from "lucide-react";
 import { useOrderStore } from "@/store/useOrderStore";
 import { formatNaira } from "@/data/products";
 import { cn } from "@/lib/utils";
@@ -21,17 +21,30 @@ const STATUS_ICONS: Record<string, typeof Package> = {
 
 function TrackingPage() {
   const { id: initialId } = useSearch({ from: "/tracking" });
+  const fetchOrders = useOrderStore((s) => s.fetchAll);
+  const allOrders = useOrderStore((s) => s.orders);
   const [q, setQ] = useState(initialId || "");
   const [searched, setSearched] = useState<string | null>(initialId || null);
+  const [loading, setLoading] = useState(false);
   const order = searched ? useOrderStore((s) => s.getById(searched)) : undefined;
+  const notFound = searched && !loading && allOrders.length > 0 && !order;
 
   useEffect(() => {
-    if (initialId) setSearched(initialId);
-  }, [initialId]);
+    if (initialId) {
+      setSearched(initialId);
+      setLoading(true);
+      fetchOrders().finally(() => setLoading(false));
+    } else {
+      fetchOrders();
+    }
+  }, [initialId, fetchOrders]);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setSearched(q.trim());
+    setLoading(true);
+    await fetchOrders();
+    setLoading(false);
   };
 
   return (
@@ -55,7 +68,13 @@ function TrackingPage() {
           </button>
         </form>
 
-        {searched && !order && (
+        {loading && (
+          <div className="mt-12 text-center">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="mt-4 text-sm text-muted-foreground">Searching…</p>
+          </div>
+        )}
+        {notFound && (
           <div className="mt-12 text-center">
             <XCircle className="mx-auto h-12 w-12 text-muted-foreground" />
             <p className="mt-4 text-sm text-muted-foreground">No order found with ID <span className="font-mono text-foreground">{searched}</span>.</p>

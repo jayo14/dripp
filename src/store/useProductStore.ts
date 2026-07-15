@@ -1,36 +1,36 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { PRODUCTS, type Product, type Category } from "@/data/products";
-
-let counter = 0;
-const uid = () => `product-${Date.now()}-${++counter}`;
+import * as productFn from "@/lib/api/products";
+import type { Product, Category } from "@/data/products";
 
 interface ProductStore {
   items: Product[];
-  add: (p: Omit<Product, "id">) => void;
-  update: (id: string, p: Partial<Product>) => void;
-  remove: (id: string) => void;
+  loading: boolean;
+  fetchAll: () => Promise<void>;
+  add: (p: Omit<Product, "id">) => Promise<void>;
+  update: (id: string, p: Partial<Product>) => Promise<void>;
+  remove: (id: string) => Promise<void>;
   getById: (id: string) => Product | undefined;
 }
 
-export const useProductStore = create<ProductStore>()(
-  persist(
-    (set, get) => ({
-      items: PRODUCTS,
-      add: (p) =>
-        set((s) => ({
-          items: [...s.items, { ...p, id: uid() }],
-        })),
-      update: (id, patch) =>
-        set((s) => ({
-          items: s.items.map((i) => (i.id === id ? { ...i, ...patch } : i)),
-        })),
-      remove: (id) =>
-        set((s) => ({
-          items: s.items.filter((i) => i.id !== id),
-        })),
-      getById: (id) => get().items.find((i) => i.id === id),
-    }),
-    { name: "dripp-products", version: 1 }
-  )
-);
+export const useProductStore = create<ProductStore>()((set, get) => ({
+  items: [],
+  loading: false,
+  fetchAll: async () => {
+    set({ loading: true });
+    const items = await productFn.listProducts();
+    set({ items, loading: false });
+  },
+  add: async (p) => {
+    const product = await productFn.createProduct({ data: p as any });
+    set((s) => ({ items: [product, ...s.items] }));
+  },
+  update: async (id, p) => {
+    const updated = await productFn.updateProduct({ data: { id, ...p } });
+    set((s) => ({ items: s.items.map((i) => (i.id === id ? updated : i)) }));
+  },
+  remove: async (id) => {
+    await productFn.deleteProduct({ data: { id } });
+    set((s) => ({ items: s.items.filter((i) => i.id !== id) }));
+  },
+  getById: (id) => get().items.find((i) => i.id === id),
+}));

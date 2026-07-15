@@ -53,8 +53,8 @@ function Checkout() {
       image: i.product.images[0],
     }));
 
-  const completeOrder = (method: "whatsapp" | "card") => {
-    const order = placeOrder({
+  const completeOrder = async (method: "whatsapp" | "card") => {
+    const order = await placeOrder({
       customer: info,
       items: buildOrderItems(),
       subtotal,
@@ -88,13 +88,12 @@ function Checkout() {
     completeOrder("whatsapp");
   };
 
-  const handleDummyPay = () => {
+  const handleDummyPay = async () => {
     setPaying(true);
-    setTimeout(() => {
-      setPaying(false);
-      setPayModal(false);
-      completeOrder("card");
-    }, 2000);
+    await new Promise((r) => setTimeout(r, 2000));
+    setPaying(false);
+    setPayModal(false);
+    await completeOrder("card");
   };
 
   if (cart.length === 0 && !placed) {

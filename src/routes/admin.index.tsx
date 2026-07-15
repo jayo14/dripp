@@ -14,10 +14,12 @@ export const Route = createFileRoute("/admin/")({
 
 function AdminDashboard() {
   const orders = useOrderStore((s) => s.orders);
-  const seed = useOrderStore((s) => s.seed);
+  const fetchOrders = useOrderStore((s) => s.fetchAll);
   const products = useProductStore((s) => s.items);
+  const fetchProducts = useProductStore((s) => s.fetchAll);
 
-  useEffect(() => { seed(); }, [seed]);
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   const activeOrders = orders.filter((o) => o.status !== "cancelled");
   const totalRevenue = activeOrders.reduce((n, o) => n + o.total, 0);
