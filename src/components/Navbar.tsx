@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useStore } from "@/store/useStore";
 import { useBrandStore } from "@/store/useBrandStore";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useProductStore } from "@/store/useProductStore";
 import { motion, AnimatePresence } from "framer-motion";
-import { PRODUCTS, formatNaira } from "@/data/products";
+import { formatNaira } from "@/data/products";
 
 const NAV = [
   { to: "/shop", label: "Shop" },
@@ -158,8 +159,13 @@ function AccountMenu() {
 function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [q, setQ] = useState("");
   const router = useRouter();
+  const products = useProductStore((s) => s.items);
+  const fetchProducts = useProductStore((s) => s.fetchAll);
+
+  useEffect(() => { fetchProducts(); }, []);
+
   const results = q
-    ? PRODUCTS.filter((p) => p.name.toLowerCase().includes(q.toLowerCase())).slice(0, 6)
+    ? products.filter((p) => p.name.toLowerCase().includes(q.toLowerCase())).slice(0, 6)
     : [];
 
   return (

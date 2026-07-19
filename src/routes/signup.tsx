@@ -21,18 +21,16 @@ function SignupPage() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) return toast.error("Password must be at least 6 characters");
     if (password !== confirm) return toast.error("Passwords do not match");
     setLoading(true);
-    setTimeout(() => {
-      const res = signup(name, email, password);
-      setLoading(false);
-      if (!res.ok) return toast.error(res.error || "Signup failed");
-      toast.success("Welcome to Dripp");
-      navigate({ to: "/" });
-    }, 500);
+    const res = await signup(name, email, password);
+    setLoading(false);
+    if (!res.ok) return toast.error(res.error || "Signup failed");
+    toast.success("Welcome to Dripp");
+    navigate({ to: "/" });
   };
 
   return (

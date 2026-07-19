@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Mail } from "lucide-react";
-import { MOCK_CUSTOMERS } from "@/data/mockOrders";
+import { useOrderStore } from "@/store/useOrderStore";
 import { formatNaira } from "@/data/products";
 import { Input } from "@/components/ui/input";
 
@@ -10,8 +10,36 @@ export const Route = createFileRoute("/admin/customers")({
 });
 
 function AdminCustomers() {
+  const orders = useOrderStore((s) => s.items);
+  const fetchOrders = useOrderStore((s) => s.fetchAll);
   const [q, setQ] = useState("");
-  const filtered = MOCK_CUSTOMERS.filter(
+
+  useEffect(() => {
+    if (orders.length === 0) fetchOrders();
+  }, []);
+
+  const customers = useMemo(() => {
+    const map = new Map<string, { name: string; email: string; location: string; orders: number; spent: number; joined: string }>();
+    for (const o of orders) {
+      if (!map.has(o.email)) {
+        map.set(o.email, {
+          name: o.name,
+          email: o.email,
+          location: o.address?.city || "",
+          orders: 0,
+          spent: 0,
+          joined: o.createdAt,
+        });
+      }
+      const c = map.get(o.email)!;
+      c.orders++;
+      c.spent += o.total;
+      if (o.createdAt < c.joined) c.joined = o.createdAt;
+    }
+    return Array.from(map.values());
+  }, [orders]);
+
+  const filtered = customers.filter(
     (c) =>
       q === "" ||
       c.name.toLowerCase().includes(q.toLowerCase()) ||
@@ -33,7 +61,7 @@ function AdminCustomers() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((c) => (
-          <div key={c.id} className="border border-border bg-background p-5">
+          <div key={c.email} className="border border-border bg-background p-5">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium">{c.name}</p>

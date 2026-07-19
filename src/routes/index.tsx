@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { PRODUCTS } from "@/data/products";
+import { useProductStore } from "@/store/useProductStore";
 import { ProductCard } from "@/components/ProductCard";
 import { useBrandStore } from "@/store/useBrandStore";
 import { ShopByCategory } from "@/components/sections/ShopByCategory";
@@ -17,9 +18,14 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const brand = useBrandStore();
-  const newArrivals = PRODUCTS.filter((p) => p.newArrival);
-  const bestSellers = PRODUCTS.filter((p) => p.bestseller).slice(0, 4);
-  const trending = [...PRODUCTS].slice(0, 4);
+  const products = useProductStore((s) => s.items);
+  const fetchProducts = useProductStore((s) => s.fetchAll);
+
+  useEffect(() => { fetchProducts(); }, []);
+
+  const newArrivals = products.filter((p) => p.newArrival);
+  const bestSellers = products.filter((p) => p.bestseller).slice(0, 4);
+  const trending = [...products].slice(0, 4);
   const heroImg = brand.heroImageUrl ?? hero;
 
   return (

@@ -2,15 +2,18 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, Minus, Plus, ChevronDown } from "lucide-react";
-import { PRODUCTS, formatNaira, type Product } from "@/data/products";
+import { listProducts } from "@/lib/api/products";
+import { formatNaira } from "@/data/products";
 import { useStore } from "@/store/useStore";
 import { ProductCard } from "@/components/ProductCard";
 
 export const Route = createFileRoute("/product/$productId")({
-  loader: ({ params }) => {
-    const product = PRODUCTS.find((p) => p.id === params.productId);
+  loader: async ({ params }) => {
+    const products = await listProducts();
+    const product = products.find((p) => p.id === params.productId);
     if (!product) throw notFound();
-    return { product };
+    const related = products.filter((p) => p.id !== product.id && p.category === product.category).slice(0, 4);
+    return { product, related };
   },
   component: ProductPage,
   notFoundComponent: () => (
@@ -22,7 +25,7 @@ export const Route = createFileRoute("/product/$productId")({
 });
 
 function ProductPage() {
-  const { product } = Route.useLoaderData() as { product: Product };
+  const { product, related } = Route.useLoaderData();
   const [activeImg, setActiveImg] = useState(0);
   const [size, setSize] = useState(product.sizes[0]);
   const [color, setColor] = useState(product.colors[0].name);
@@ -34,7 +37,6 @@ function ProductPage() {
   const wishlist = useStore((s) => s.wishlist);
   const toggleWishlist = useStore((s) => s.toggleWishlist);
   const isWished = wishlist.includes(product.id);
-  const related = PRODUCTS.filter((p) => p.id !== product.id && p.category === product.category).slice(0, 4);
 
   return (
     <div className="container-luxe py-10">

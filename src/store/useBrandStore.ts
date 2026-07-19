@@ -1,8 +1,3 @@
-// ============================================================================
-// BRAND STORE — drives the dynamic, reusable storefront
-// All visual identity, copy, contact info, and category toggles live here.
-// Persisted to localStorage so client demos survive reloads.
-// ============================================================================
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
@@ -15,21 +10,18 @@ import {
 export interface BrandConfig {
   name: string;
   tagline: string;
-  logoUrl: string | null; // optional uploaded logo (data URL)
+  logoUrl: string | null;
   heroEyebrow: string;
   heroTitle: string;
   heroSubtitle: string;
-  heroImageUrl: string | null; // optional override
+  heroImageUrl: string | null;
   promoText: string;
   audience: AudienceTheme;
-  // contact / social
-  instagram: string; // handle without @
-  whatsapp: string; // E.164 e.g. +2348012345678
+  instagram: string;
+  whatsapp: string;
   email: string;
   deliveryLocations: string[];
-  // category visibility
   categories: Record<ProductCategoryKey, boolean>;
-  // section visibility
   sections: {
     newArrivals: boolean;
     featured: boolean;
@@ -47,6 +39,7 @@ interface BrandStore extends BrandConfig {
   toggleCategory: (k: ProductCategoryKey) => void;
   toggleSection: (k: keyof BrandConfig["sections"]) => void;
   reset: () => void;
+  syncToServer: () => Promise<void>;
 }
 
 const DEFAULTS: BrandConfig = {
@@ -81,7 +74,7 @@ const DEFAULTS: BrandConfig = {
 
 export const useBrandStore = create<BrandStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...DEFAULTS,
       set: (key, value) => set({ [key]: value } as any),
       toggleCategory: (k) =>
@@ -89,10 +82,14 @@ export const useBrandStore = create<BrandStore>()(
       toggleSection: (k) =>
         set((s) => ({ sections: { ...s.sections, [k]: !s.sections[k] } })),
       reset: () => set(DEFAULTS),
+      syncToServer: async () => {
+        const { updateBrandConfig } = await import("@/lib/api/brand");
+        const { syncToServer: _, ...config } = get();
+        await updateBrandConfig({ data: config });
+      },
     }),
     { name: "dripp-brand-config", version: 1 }
   )
 );
 
-// Helper exposing the active theme preset
 export const getActiveTheme = (audience: AudienceTheme) => THEME_PRESETS[audience];

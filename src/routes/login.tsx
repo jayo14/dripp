@@ -19,17 +19,15 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      const res = login(email, password);
-      setLoading(false);
-      if (!res.ok) return toast.error(res.error || "Login failed");
-      toast.success("Welcome back");
-      const isAdmin = useAuthStore.getState().isAdmin();
-      navigate({ to: isAdmin ? "/admin" : "/" });
-    }, 500);
+    const res = await login(email, password);
+    setLoading(false);
+    if (!res.ok) return toast.error(res.error || "Login failed");
+    toast.success("Welcome back");
+    const isAdmin = useAuthStore.getState().isAdmin();
+    navigate({ to: isAdmin ? "/admin" : "/" });
   };
 
   return (

@@ -16,16 +16,14 @@ function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setSent(true);
-      toast.success("Reset link sent — check your email");
-      // Demo: skip to reset page
-      setTimeout(() => navigate({ to: "/reset-password", search: { email } as never }), 1200);
-    }, 700);
+    await new Promise((r) => setTimeout(r, 700));
+    setLoading(false);
+    setSent(true);
+    toast.success("Reset link sent — check your email");
+    setTimeout(() => navigate({ to: "/reset-password", search: { email } as never }), 1200);
   };
 
   return (

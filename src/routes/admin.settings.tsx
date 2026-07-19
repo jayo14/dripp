@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useBrandStore } from "@/store/useBrandStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,14 @@ export const Route = createFileRoute("/admin/settings")({
 
 function AdminSettings() {
   const brand = useBrandStore();
+  const [saving, setSaving] = useState(false);
 
-  const save = () => toast.success("Settings saved");
+  const save = async () => {
+    setSaving(true);
+    await brand.syncToServer();
+    setSaving(false);
+    toast.success("Settings saved");
+  };
 
   return (
     <div className="space-y-8 max-w-3xl">
@@ -83,8 +90,8 @@ function AdminSettings() {
         <Button variant="outline" onClick={() => brand.reset()} className="rounded-none text-xs uppercase tracking-luxury">
           Reset to defaults
         </Button>
-        <Button onClick={save} className="rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs uppercase tracking-luxury">
-          Save changes
+        <Button onClick={save} disabled={saving} className="rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs uppercase tracking-luxury">
+          {saving ? "Saving…" : "Save changes"}
         </Button>
       </div>
     </div>
